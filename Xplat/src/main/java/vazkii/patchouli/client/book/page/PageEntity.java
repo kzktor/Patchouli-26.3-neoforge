@@ -25,6 +25,7 @@ import vazkii.patchouli.client.book.gui.GuiBookEntry;
 import vazkii.patchouli.client.book.page.abstr.PageWithText;
 import vazkii.patchouli.common.util.EntityUtil;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class PageEntity extends PageWithText {
@@ -91,6 +92,19 @@ public class PageEntity extends PageWithText {
 		super.extractRenderState(graphics, mouseX, mouseY, pticks);
 	}
 
+	/**
+	 * 26.3 起 {@code Entity#getId()} 在 id 还没分配时会抛 {@code IllegalStateException}，而渲染活体时一定会用到它
+	 * ——{@code ItemModelResolver#updateForLiving} 拿它当物品模型的随机种子（{@code entity.getId() + displayContext.ordinal()}）。
+	 * 书页预览用的实体是游离的：由 {@code creator.apply(world)} 造出来、从没进过世界，永远不会被分配 id，
+	 * 所以必须自己补一个。用负数避开真实实体的 id（EntityCountInput 从 1 开始递增），
+	 * 并且只在创建时赋一次值——每帧重算的话种子会变，物品模型会逐帧闪。
+	 */
+	private static final AtomicInteger PREVIEW_ENTITY_ID = new AtomicInteger(-1);
+
+	public static void assignPreviewEntityId(Entity entity) {
+		entity.setId(PREVIEW_ENTITY_ID.getAndDecrement());
+	}
+
 	public static void renderEntity(GuiGraphicsExtractor graphics, Entity entity, int x, int y, int width, int height, float rotation, float renderScale, float offset, float pticks) {
 		Vector2f position = graphics.pose().transformPosition(x, y, new Vector2f());
 
@@ -118,6 +132,7 @@ public class PageEntity extends PageWithText {
 		if (!errored && (entity == null || !entity.isAlive() || entity.level() != world)) {
 			try {
 				entity = creator.apply(world);
+				assignPreviewEntityId(entity);
 
 				float width = entity.getBbWidth();
 				float height = entity.getBbHeight();

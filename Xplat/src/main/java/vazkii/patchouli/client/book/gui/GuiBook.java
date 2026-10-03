@@ -1,5 +1,6 @@
 package vazkii.patchouli.client.book.gui;
 
+import com.mojang.blaze3d.Blaze3D;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.datafixers.util.Pair;
@@ -23,9 +24,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Util;
+import java.net.URI;
+import java.net.URISyntaxException;
 import net.minecraft.world.item.ItemStack;
 
+import vazkii.patchouli.api.PatchouliAPI;
 import vazkii.patchouli.client.base.ClientTicker;
 import vazkii.patchouli.client.base.PersistentData;
 import vazkii.patchouli.client.base.PersistentData.Bookmark;
@@ -243,9 +246,9 @@ public abstract class GuiBook extends Screen {
 				tooltip.add(t);
 				targetPage = provider;
 			}
-			graphics.tooltip(this.font, tooltip.stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList(), mouseX, mouseY, DefaultTooltipPositioner.INSTANCE, null);
+			graphics.setTooltipForNextFrame(this.font, tooltip.stream().map(Component::getVisualOrderText).toList(), Optional.empty(), DefaultTooltipPositioner.INSTANCE, mouseX, mouseY, false, null);
 		} else if (tooltip != null && !tooltip.isEmpty()) {
-			graphics.tooltip(this.font, tooltip.stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList(), mouseX, mouseY, DefaultTooltipPositioner.INSTANCE, null);
+			graphics.setTooltipForNextFrame(this.font, tooltip.stream().map(Component::getVisualOrderText).toList(), Optional.empty(), DefaultTooltipPositioner.INSTANCE, mouseX, mouseY, false, null);
 		}
 	}
 
@@ -340,7 +343,7 @@ public abstract class GuiBook extends Screen {
 		} else if (event.key() == InputConstants.KEY_BACKSPACE) {
 			back(true);
 			return true;
-		} else if (tooltipStack != null && IXplatAbstractions.INSTANCE.handleRecipeKeybind(event.key(), event.scancode(), tooltipStack)) {
+		} else if (tooltipStack != null && IXplatAbstractions.INSTANCE.handleRecipeKeybind(event.key(), event.keycode(), tooltipStack)) {
 			return true;
 		} else if (tooltipStack != null && IXplatAbstractions.INSTANCE.isModLoaded("jei")
 				&& PatchouliJeiPlugin.handleRecipeKeybind(event, tooltipStack)) {
@@ -568,13 +571,22 @@ public abstract class GuiBook extends Screen {
 
 	public static void openWebLink(Screen prevScreen, String address) {
 		var mc = Minecraft.getInstance();
-		mc.setScreen(new ConfirmLinkScreen(yes -> {
+		// 26.3 的 ConfirmLinkScreen 收 URI 而不是 String；地址不是合法 URI 时直接不弹窗，
+		// 交回原屏幕（书里的链接是数据包内容，可能被写坏）。
+		URI uri;
+		try {
+			uri = new URI(address);
+		} catch (URISyntaxException e) {
+			PatchouliAPI.LOGGER.warn("Invalid link in book: {}", address, e);
+			return;
+		}
+		mc.gui.setScreen(new ConfirmLinkScreen(yes -> {
 			if (yes) {
-				Util.getPlatform().openUri(address);
+				Blaze3D.openUri(uri);
 			}
 
-			mc.setScreen(prevScreen);
-		}, address, false));
+			mc.gui.setScreen(prevScreen);
+		}, uri, false));
 	}
 
 	public void displayLexiconGui(GuiBook gui, boolean push) {

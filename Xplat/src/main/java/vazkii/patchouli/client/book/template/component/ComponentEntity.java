@@ -69,6 +69,8 @@ public class ComponentEntity extends TemplateComponent {
 		if (!errored && (entity == null || !entity.isAlive() || entity.level() != world)) {
 			try {
 				entity = creator.apply(world);
+				// 游离实体没有 id，26.3 渲染活体时会抛；见 PageEntity#assignPreviewEntityId
+				PageEntity.assignPreviewEntityId(entity);
 				float width = entity.getBbWidth();
 				float height = entity.getBbHeight();
 

@@ -2,6 +2,7 @@ package vazkii.patchouli.client.book.template;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -172,9 +173,14 @@ public class VariableAssigner {
 	}
 
 	private static IVariable stacks(IVariable arg, HolderLookup.Provider registries) {
-		return IVariable.from(arg.as(Ingredient.class).display().resolveForStacks(new ContextMap.Builder()
-				.withParameter(SlotDisplayContext.REGISTRIES, registries)
-				.create(SlotDisplayContext.CONTEXT)).toArray(new ItemStack[0]), registries);
+		// 26.3 的 ContextMap.Builder 构造器私有化，改用 ContextMap.builder()；withParameter → set。
+		// REGISTRIES 需要真正的 RegistryAccess，而这里只拿得到 HolderLookup.Provider，
+		// 好在 CONTEXT 把它声明成 optional，不是 RegistryAccess 时就不塞这个参数。
+		ContextMap.Builder builder = ContextMap.builder();
+		if (registries instanceof RegistryAccess access) {
+			builder.set(SlotDisplayContext.REGISTRIES, access);
+		}
+		return IVariable.from(arg.as(Ingredient.class).display().resolveForStacks(builder.buildAndValidate(SlotDisplayContext.CONTEXT)).toArray(new ItemStack[0]), registries);
 	}
 
 	private static String ename(String arg) {

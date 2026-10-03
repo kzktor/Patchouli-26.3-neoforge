@@ -22,4 +22,8 @@ plugins {
 }
 
 rootProject.name = 'Patchouli'
-include("Xplat", "Fabric", "NeoForge")
+// Only the NeoForge target is built here. The Fabric subproject is left out entirely: it needs
+// Fabric Loom (a `1.15-SNAPSHOT` plugin, i.e. a moving target) and nothing in this port consumes it.
+// Xplat stays — it holds the shared sources and NeoForge's build.gradle compiles them in via
+// `source xplat.sourceSets.main.allSource`.
+include("Xplat", "NeoForge")

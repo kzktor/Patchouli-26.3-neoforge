@@ -50,6 +50,11 @@ public record LiquidBlockVertexConsumer(VertexConsumer prior, PoseStack pose, Bl
 	}
 
 	@Override
+	public VertexConsumer setUv3(float u, float v) {
+		return prior.setUv3(u, v);
+	}
+
+	@Override
 	public VertexConsumer setNormal(float x, float y, float z) {
 		return prior.setNormal(pose.last(), x, y, z);
 	}

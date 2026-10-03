@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.LecternBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.phys.BlockHitResult;
 
 import vazkii.patchouli.api.PatchouliAPI;
@@ -53,7 +54,7 @@ public class LecternEventHandler {
 		tileEntity.setBook(ItemStack.EMPTY);
 		LecternBlock.resetBookState(player, tileEntity.getLevel(), tileEntity.getBlockPos(), tileEntity.getBlockState(), false);
 		if (!player.getInventory().add(itemstack)) {
-			player.drop(itemstack, false);
+			player.drop(itemstack, false, Prediction.PREDICTED);
 		}
 	}
 }

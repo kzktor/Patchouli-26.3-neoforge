@@ -2,7 +2,7 @@ modLoader="javafml"
 license="CC BY-NC-SA 3.0"
 loaderVersion="[4,)"
 issueTrackerURL="https://github.com/VazkiiMods/Patchouli"
-logoFile="logo.png"
+iconFile="logo.png"
 
 [[mods]]
 modId="${mod_id}"

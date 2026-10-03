@@ -1,5 +1,6 @@
 package vazkii.patchouli.client.handler;
 
+import net.minecraft.CrashReportDetail;
 import net.minecraft.SystemReport;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,15 +14,14 @@ import vazkii.patchouli.common.book.Book;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.function.Supplier;
 
-public class BookCrashHandler implements Supplier<String> {
+public class BookCrashHandler implements CrashReportDetail<Object> {
 	private static final String INDENT = "\n\t\t";
 	private static final String LABEL = "Patchouli open book context";
 
 	public static void appendToCrashReport(SystemReport report) {
 		var mc = Minecraft.getInstance();
-		if (mc == null || !(mc.screen instanceof GuiBook)) {
+		if (mc == null || !(mc.gui.screen() instanceof GuiBook)) {
 			return;
 		}
 		try {
@@ -32,8 +32,8 @@ public class BookCrashHandler implements Supplier<String> {
 	}
 
 	@Override
-	public String get() {
-		Screen screen = Minecraft.getInstance().screen;
+	public Object call() {
+		Screen screen = Minecraft.getInstance().gui.screen();
 		if (!(screen instanceof GuiBook gui)) {
 			return "n/a";
 		}
